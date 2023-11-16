@@ -6,9 +6,19 @@
 #include <string.h>
 #include <stdlib.h>
 
+int termswipe_print(int n) {
+    printf("%d: %c%c%c%c (%d, %d)\n", n,
+        n & TERMSWIPE_L ? 'L' : '-',
+        n & TERMSWIPE_R ? 'R' : '-',
+        n & TERMSWIPE_U ? 'U' : '-',
+        n & TERMSWIPE_D ? 'D' : '-',
+        TERMSWIPE_GET_X(n), TERMSWIPE_GET_Y(n)
+    );
+    return n;
+}
 
-enum TERMSWIPE termswipe() {
-    static enum TERMSWIPE out;
+int termswipe() {
+    static enum TERMSWIPE_ACTION out = 0;
     out = TERMSWIPE_NONE;
     // Termios init
         static struct termios old;
@@ -23,8 +33,9 @@ enum TERMSWIPE termswipe() {
         static char buf[16];
         static char *bufp;
         static int size;
-        static int x1, y1, x2, y2;
-        x1 = -1;
+        static unsigned char x1, y1, x2, y2;
+        x1 = 0;
+        y1 = 0;
         while (1) {
             memset(buf, 0, sizeof(buf));
             bufp = buf;
@@ -60,6 +71,7 @@ enum TERMSWIPE termswipe() {
         printf("\x1b[?1003l\x1b[?1015l\x1b[?1006l");
         fflush(stdout);
         tcsetattr(STDIN_FILENO, TCSANOW, &old);
+        out = out | (x1 << 8) | (y1 << 16);
         return out;
     }
 }
